@@ -451,3 +451,30 @@ TEST(T_UtilConcurrency, MultiThreadedFifoChannel) {
                                          g_insert_cycles * g_cpu_burn_cycles;
   EXPECT_EQ (expected_checksum, checksum);
 }
+
+
+//
+// # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+//
+
+
+class BindMock {
+ public:
+  BindMock() : called_(false) {}
+
+  void MockMethod(const bool &flag) {
+    called_ = flag;
+  }
+
+  bool WasCalled() const { return called_; }
+
+ private:
+  bool called_;
+};
+
+TEST(T_UtilConcurrency, Bind) {
+  BindMock bind;
+  CallbackBase<bool>* clb = Bind<BindMock, bool>(&BindMock::MockMethod, &bind);
+  (*clb)(true);
+  ASSERT_TRUE (bind.WasCalled());
+}

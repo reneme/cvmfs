@@ -526,6 +526,55 @@ class Observable : public Callbackable<ParamT>,
 //
 
 
+template <class DelegateT, class ParamT>
+BoundCallback<ParamT, DelegateT>* Bind(
+    typename BoundCallback<ParamT, DelegateT>::CallbackMethod  method,
+                                                    DelegateT *delegate) {
+  return new BoundCallback<ParamT, DelegateT>(method, delegate);
+}
+
+
+//
+// -----------------------------------------------------------------------------
+//
+
+
+// template <class JobT>
+// class AsyncWorker {
+//  private:
+//   struct JobWrapper {
+//     JobWrapper(const bool terminate) : termination(terminate) {}
+//     bool termination;
+//   };
+
+//  public:
+//   AsyncWorker() : initialized_(false) {}
+
+//   InitAsyncWorker(DelegateT *delegate) {
+//     initialized_ = true;
+//   }
+
+//   TearDownAsyncWorker() {
+//     initialized_ = false;
+//   }
+
+//  protected:
+//   void WorkerThread(DelegateT *delegate) {
+//     delegate->WorkerThread();
+//   }
+
+//  private:
+//   bool                                       initialized_;
+//   tbb::concurrent_bounded_queue<JobWrapper>  queue_;
+//   tbb::tbb_thread                            worker_thread_;
+// };
+
+
+//
+// -----------------------------------------------------------------------------
+//
+
+
 /**
  * Returns the number of CPU cores present in the system or a fallback number
  * if it failed to determine the number of CPU cores.
