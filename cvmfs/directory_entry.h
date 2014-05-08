@@ -289,6 +289,23 @@ class DirectoryEntry : public DirectoryEntryBase {
   bool is_negative_;
 };
 
+
+class LocatedDirectoryEntry : public DirectoryEntry {
+ public:
+  /**
+   * This is _kind of_ a copy constructor allowing us to create
+   * LocatedDirectoryEntries directly from DirectoryEntry objects.
+   */
+  inline explicit LocatedDirectoryEntry(const DirectoryEntry &dirent,
+                                        const PathString     &absolute_path) :
+    DirectoryEntry(dirent), path_(absolute_path) {}
+
+  const PathString& path() const { return path_; }
+
+ private:
+  PathString path_;
+};
+
 /**
  * Saves memory for large directory listings
  */
@@ -302,6 +319,7 @@ struct StatEntry {
 
 typedef std::vector<DirectoryEntry> DirectoryEntryList;         // TODO: rename!
 typedef std::vector<DirectoryEntryBase> DirectoryEntryBaseList; //       these are NOT lists.
+typedef std::vector<LocatedDirectoryEntry> LocatedDirectoryEntryList; // --> same here
 typedef BigVector<StatEntry> StatEntryList;  // TODO: use mmap for large listings
 
 } // namespace catalog
