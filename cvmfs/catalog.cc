@@ -62,6 +62,7 @@ Catalog::Catalog(const PathString &path,
   sql_listing_ = NULL;
   sql_lookup_md5path_ = NULL;
   sql_lookup_inode_ = NULL;
+  sql_lookup_glob_string_ = NULL;
   sql_lookup_nested_ = NULL;
   sql_list_nested_ = NULL;
   sql_all_chunks_ = NULL;
@@ -84,13 +85,14 @@ Catalog::~Catalog() {
  * the WritableCatalog and the Catalog destructor
  */
 void Catalog::InitPreparedStatements() {
-  sql_listing_         = new SqlListing(database());
-  sql_lookup_md5path_  = new SqlLookupPathHash(database());
-  sql_lookup_inode_    = new SqlLookupInode(database());
-  sql_lookup_nested_   = new SqlNestedCatalogLookup(database());
-  sql_list_nested_     = new SqlNestedCatalogListing(database());
-  sql_all_chunks_      = new SqlAllChunks(database());
-  sql_chunks_listing_  = new SqlChunksListing(database());
+  sql_listing_            = new SqlListing               (database());
+  sql_lookup_md5path_     = new SqlLookupPathHash        (database());
+  sql_lookup_inode_       = new SqlLookupInode           (database());
+  sql_lookup_glob_string_ = new SqlLookupGlobString      (database());
+  sql_lookup_nested_      = new SqlNestedCatalogLookup   (database());
+  sql_list_nested_        = new SqlNestedCatalogListing  (database());
+  sql_all_chunks_         = new SqlAllChunks             (database());
+  sql_chunks_listing_     = new SqlChunksListing         (database());
 }
 
 
@@ -100,6 +102,7 @@ void Catalog::FinalizePreparedStatements() {
   delete sql_listing_;
   delete sql_lookup_md5path_;
   delete sql_lookup_inode_;
+  delete sql_lookup_glob_string_;
   delete sql_lookup_nested_;
   delete sql_list_nested_;
 }
@@ -274,6 +277,26 @@ bool Catalog::LookupRawSymlink(const PathString &path,
   if (result)
     raw_symlink->Assign(dirent.symlink());
   return result;
+}
+
+
+bool Catalog::LookupGlobString(const std::string   &glob_string,
+                               const shash::Md5    &md5parent_path,
+                               DirectoryEntryList  *dirents) const {
+  assert(IsInitialized());
+
+  pthread_mutex_lock(lock_);
+  sql_lookup_glob_string_->BindParentHash(md5parent_path);
+  sql_lookup_glob_string_->BindGlobString(glob_string);
+  while (sql_lookup_glob_string_->FetchRow()) {
+    DirectoryEntry dirent = sql_lookup_glob_string_->GetDirent(this);
+    FixTransitionPoint(md5parent_path, &dirent);
+    dirents->push_back(dirent);
+  }
+  sql_lookup_glob_string_->Reset();
+  pthread_mutex_unlock(lock_);
+
+  return true;
 }
 
 

@@ -661,6 +661,27 @@ bool SqlLookupInode::BindRowId(const uint64_t inode) {
 //------------------------------------------------------------------------------
 
 
+SqlLookupGlobString::SqlLookupGlobString(const Database &database) {
+  const string statement =
+    "SELECT " + GetFieldsToSelect(database) + " FROM catalog "
+    "WHERE (parent_1 = :p_1) AND (parent_2 = :p_2) AND (name GLOB :g)";
+  Init (database.sqlite_db(), statement);
+}
+
+
+bool SqlLookupGlobString::BindGlobString(const std::string &glob_string) {
+  return BindText(3, glob_string);
+}
+
+
+bool SqlLookupGlobString::BindParentHash(const struct shash::Md5 &hash) {
+  return BindMd5(1, 2, hash);
+}
+
+
+//------------------------------------------------------------------------------
+
+
 SqlDirentTouch::SqlDirentTouch(const Database &database) {
   const string statement =
     "UPDATE catalog "

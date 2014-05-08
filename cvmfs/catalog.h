@@ -112,6 +112,15 @@ class Catalog : public SingleCopy {
     return LookupMd5Path(shash::Md5(path.GetChars(), path.GetLength()), dirent);
   }
   bool LookupRawSymlink(const PathString &path, LinkString *raw_symlink) const;
+  bool LookupGlobString(const std::string   &glob_string,
+                        const shash::Md5    &md5parent_path,
+                        DirectoryEntryList  *dirents) const;
+  bool LookupGlobString(const std::string   &glob_string,
+                        const PathString    &parent_p,
+                        DirectoryEntryList  *dirents) const {
+    const shash::Md5 md5parent_path(parent_p.GetChars(), parent_p.GetLength());
+    return LookupGlobString(glob_string, md5parent_path, dirents);
+  }
 
   bool ListingMd5Path(const shash::Md5 &md5path,
                       DirectoryEntryList *listing) const;
@@ -248,6 +257,7 @@ class Catalog : public SingleCopy {
   SqlListing               *sql_listing_;
   SqlLookupPathHash        *sql_lookup_md5path_;
   SqlLookupInode           *sql_lookup_inode_;
+  SqlLookupGlobString      *sql_lookup_glob_string_;
   SqlNestedCatalogLookup   *sql_lookup_nested_;
   SqlNestedCatalogListing  *sql_list_nested_;
   SqlAllChunks             *sql_all_chunks_;

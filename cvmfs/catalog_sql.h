@@ -346,6 +346,17 @@ class SqlLookupInode : public SqlLookup {
 //------------------------------------------------------------------------------
 
 
+class SqlLookupGlobString : public SqlLookup {
+ public:
+  SqlLookupGlobString(const Database &database);
+  bool BindGlobString(const std::string &glob_string);
+  bool BindParentHash(const struct shash::Md5 &hash);
+};
+
+
+//------------------------------------------------------------------------------
+
+
 /**
  * Filesystem like _touch_ of a DirectoryEntry. Only file system specific meta
  * data will be modified. All CVMFS-specific administrative data stays unchanged.
