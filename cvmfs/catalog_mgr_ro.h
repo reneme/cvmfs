@@ -13,6 +13,8 @@
 
 #include "catalog_mgr.h"
 
+class Pathspec;
+
 namespace download {
 class DownloadManager;
 }
@@ -32,6 +34,9 @@ class SimpleCatalogManager : public AbstractCatalogManager {
     stratum0_(stratum0),
     dir_temp_(dir_temp),
     download_manager_(download_manager) {};
+
+  bool LookupPathspec(const Pathspec             &pathspec,
+                      LocatedDirectoryEntryList  *listing);
 
  protected:
   virtual LoadError LoadCatalog(const PathString  &mountpoint,
