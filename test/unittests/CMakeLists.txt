@@ -63,6 +63,7 @@ set (CVMFS_UNITTEST_SOURCES
   ${CVMFS_SOURCE_DIR}/platform_osx.h
   ${CVMFS_SOURCE_DIR}/prng.h
   ${CVMFS_SOURCE_DIR}/util.h
+  ${CVMFS_SOURCE_DIR}/util_impl.h
   ${CVMFS_SOURCE_DIR}/util.cc
   ${CVMFS_SOURCE_DIR}/hash.h
   ${CVMFS_SOURCE_DIR}/hash.cc

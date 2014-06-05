@@ -540,6 +540,48 @@ class Callbackable {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
 
+template <class T>
+class LazyInitializer : public Callbackable<T*> {
+ protected:
+  typedef typename Callbackable<T*>::callback_t*  callback_ptr;
+
+ public:
+  LazyInitializer(callback_ptr initializer) :
+    initializer_(initializer) {
+      atomic_init32(&needs_init_);
+      atomic_write32(&needs_init_, 1);
+      pthread_mutex_init(&init_mutex_, NULL);
+  }
+
+  virtual ~LazyInitializer() {
+    if (initializer_ != NULL) {
+      delete initializer_;
+      initializer_ = NULL;
+    }
+    pthread_mutex_destroy(&init_mutex_);
+  }
+
+  T& Get() const {
+    LazyInitialize();
+    return data_;
+  };
+
+ protected:
+  void LazyInitialize() const;
+
+ protected:
+  mutable T data_;
+
+ private:
+  mutable atomic_int32     needs_init_;
+  mutable pthread_mutex_t  init_mutex_;
+  mutable callback_ptr     initializer_;
+};
+
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+
 /**
  * Used internally by the PolymorphicConstruction template
  * Provides an abstract interface for Factory objects that allow the poly-
@@ -967,5 +1009,7 @@ class Buffer {
 #ifdef CVMFS_NAMESPACE_GUARD
 }
 #endif
+
+#include "util_impl.h"
 
 #endif  // CVMFS_UTIL_H_

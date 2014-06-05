@@ -9,7 +9,7 @@ set (CVMFS_LOADER_SOURCES
   logging_internal.h logging.h logging.cc
   prng.h
   hash.h hash.cc
-  util.h util.cc
+  util.h util_impl.h util.cc
   sanitizer.h sanitizer.cc
   options.h options.cc
   globals.h globals.cc
@@ -28,7 +28,7 @@ set (CVMFS_CLIENT_SOURCES
   cache.h cache.cc
   platform.h platform_osx.h platform_linux.h
   monitor.h monitor.cc
-  prng.h util.cc util.h
+  prng.h util.cc util.h util_impl.h
   backoff.h backoff.cc
   duplex_zlib.h compression.h compression.cc
   sanitizer.cc sanitizer.h
@@ -91,7 +91,7 @@ set (CVMFS_FSCK_SOURCES
   duplex_zlib.h compression.cc compression.h
   prng.h
   hash.cc hash.h
-  util.cc util.h
+  util.cc util.h util_impl.h
   cvmfs_fsck.cc)
 
 set (CVMFS_SWISSKNIFE_SOURCES
@@ -107,7 +107,7 @@ set (CVMFS_SWISSKNIFE_SOURCES
   prng.h
   hash.h hash.cc
   compression.h compression.cc
-  util.h util.cc
+  util.h util_impl.h util.cc
   util_concurrency.h util_concurrency_impl.h util_concurrency.cc
 
   file_processing/async_reader.h file_processing/async_reader_impl.h file_processing/async_reader.cc
