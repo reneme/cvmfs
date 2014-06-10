@@ -590,6 +590,10 @@ class LazyInitializer : public Callbackable<T1> {
   T& Get() const { LazyInitialize(); return GetDirectly(); };
   T& GetDirectly() const { return data_; }
 
+  void Reset() {
+    atomic_write32(&needs_init_, 1);
+  }
+
  protected:
   void LazyInitialize() const;
 
