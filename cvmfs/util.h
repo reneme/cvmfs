@@ -536,46 +536,73 @@ class Callbackable {
   }
 };
 
+
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
 
-template <class T>
-class LazyInitializer : public Callbackable<T*> {
+
+template <class T, class T1 = T*>
+class LazyInitializer : public Callbackable<T1> {
  protected:
-  typedef typename Callbackable<T*>::callback_t*  callback_ptr;
+  typedef typename Callbackable<T1>::callback_t*  callback_ptr;
+
+  template <class CallbackPtrT, class ParamT>
+  struct Initializer {
+    Initializer(CallbackPtrT callback, ParamT data) :
+      callback(callback), data(data) {}
+    ~Initializer() { delete callback; }
+    void operator()() const { (*callback)(data); }
+
+    CallbackPtrT  callback;
+    ParamT        data;
+  };
+
+  template <class CallbackPtrT>
+  struct Initializer<CallbackPtrT, void> {
+    Initializer(CallbackPtrT callback, void *data) :
+      callback(callback), data(data) {}
+    ~Initializer() { delete callback; }
+    void operator()() const { (*callback)(); }
+
+    mutable CallbackPtrT  callback;
+    void                 *data;
+  };
 
  public:
   LazyInitializer(callback_ptr initializer) :
-    initializer_(initializer) {
+    initializer_(initializer, &data_) {
       atomic_init32(&needs_init_);
       atomic_write32(&needs_init_, 1);
       pthread_mutex_init(&init_mutex_, NULL);
   }
 
   virtual ~LazyInitializer() {
-    if (initializer_ != NULL) {
-      delete initializer_;
-      initializer_ = NULL;
-    }
     pthread_mutex_destroy(&init_mutex_);
   }
 
-  T& Get() const {
-    LazyInitialize();
-    return data_;
-  };
+  LazyInitializer<T, T1>& operator=(const T& other) {
+    data_ = other;
+    return *this;
+  }
+
+  operator T() { return Get(); }
+  T& Get() const { LazyInitialize(); return GetDirectly(); };
+  T& GetDirectly() const { return data_; }
 
  protected:
   void LazyInitialize() const;
+
+  bool IsInitialized() const { return atomic_read32(&needs_init_) != 1; }
+  void CommitInit()    const {        atomic_dec32(&needs_init_);       }
 
  protected:
   mutable T data_;
 
  private:
-  mutable atomic_int32     needs_init_;
-  mutable pthread_mutex_t  init_mutex_;
-  mutable callback_ptr     initializer_;
+  mutable atomic_int32                  needs_init_;
+  mutable pthread_mutex_t               init_mutex_;
+          Initializer<callback_ptr, T1> initializer_;
 };
 
 //
