@@ -793,15 +793,18 @@ class PolymorphicConstructionImpl {
   typedef std::vector<Factory*> RegisteredPlugins;
 
  public:
+  typedef LazyInitializer<RegisteredPlugins, void> RegisteredPluginsInitializer;
+
+ public:
   virtual ~PolymorphicConstructionImpl() {};
 
   static AbstractProductT* Construct(const ParameterT &param) {
-    LazilyRegisterPlugins();
+    const RegisteredPlugins &plugins = registered_plugins_;
 
     // select and initialize the correct plugin at runtime
     // (polymorphic construction)
-    typename RegisteredPlugins::const_iterator i    = registered_plugins_.begin();
-    typename RegisteredPlugins::const_iterator iend = registered_plugins_.end();
+    typename RegisteredPlugins::const_iterator i    = plugins.begin();
+    typename RegisteredPlugins::const_iterator iend = plugins.end();
     for (; i != iend; ++i) {
       if ((*i)->WillHandle(param)) {
         // create and initialize the class that claimed responsibility
@@ -819,26 +822,6 @@ class PolymorphicConstructionImpl {
   }
 
  protected:
-  static void LazilyRegisterPlugins() {
-    // Thread Safety Note:
-    //   Double Checked Locking with atomics!
-    //   Simply double checking registered_plugins_.empty() is _not_ thread safe
-    //   since a second thread might find a registered_plugins_ list that is
-    //   currently under construction and therefore _not_ empty but also _not_
-    //   fully initialized!
-    // See StackOverflow: http://stackoverflow.com/questions/8097439/lazy-initialized-caching-how-do-i-make-it-thread-safe
-    if(atomic_read32(&needs_init_)) {
-      pthread_mutex_lock(&init_mutex_);
-      if(atomic_read32(&needs_init_)) {
-        AbstractProductT::RegisterPlugins();
-        atomic_dec32(&needs_init_);
-      }
-      pthread_mutex_unlock(&init_mutex_);
-    }
-
-    assert (!registered_plugins_.empty());
-  }
-
   /**
    * Friend class for testability (see test/unittests/testutil.h)
    */
@@ -857,7 +840,7 @@ class PolymorphicConstructionImpl {
    */
   template <class ConcreteProductT>
   static void RegisterPlugin() {
-    registered_plugins_.push_back(
+    registered_plugins_.GetDirectly().push_back(
       new AbstractFactoryImpl<ConcreteProductT,
                               AbstractProductT,
                               ParameterT,
@@ -880,16 +863,12 @@ class PolymorphicConstructionImpl {
    *       -> Global state is nasty!
    */
   static void UnregisterAllPlugins() {
-    registered_plugins_.clear();
-    needs_init_ = 1;
+    registered_plugins_.GetDirectly().clear();
+    registered_plugins_.Reset();
   }
 
  protected:
-  static RegisteredPlugins registered_plugins_;
-
- private:
-  static atomic_int32      needs_init_;
-  static pthread_mutex_t   init_mutex_;
+  static RegisteredPluginsInitializer registered_plugins_;
 };
 
 
@@ -911,11 +890,11 @@ class PolymorphicConstruction :
   typedef std::vector<InfoT> IntrospectionData;
 
   static IntrospectionData Introspect() {
-    IntrospectionData introspection_data;
-    introspection_data.reserve(T::registered_plugins_.size());
     const RegisteredPlugins &plugins = T::registered_plugins_;
 
-    T::LazilyRegisterPlugins();
+    IntrospectionData introspection_data;
+    introspection_data.reserve(plugins.size());
+
     typename RegisteredPlugins::const_iterator i    = plugins.begin();
     typename RegisteredPlugins::const_iterator iend = plugins.end();
     for (; i != iend; ++i) {
@@ -935,21 +914,19 @@ class PolymorphicConstruction<AbstractProductT, ParameterT, void> :
       public PolymorphicConstructionImpl<AbstractProductT, ParameterT, void> {};
 
 
-
-template <class AbstractProductT, typename ParameterT, typename InfoT>
-atomic_int32
-PolymorphicConstructionImpl<AbstractProductT, ParameterT, InfoT>::needs_init_ = 1;
-
-template <class AbstractProductT, typename ParameterT, typename InfoT>
-pthread_mutex_t
-PolymorphicConstructionImpl<AbstractProductT, ParameterT, InfoT>::init_mutex_ =
-                                                      PTHREAD_MUTEX_INITIALIZER;
-
 // init the static member registered_plugins_ inside the PolymorphicConstructionImpl
 // template... whoa, what ugly code :o)
 template <class AbstractProductT, typename ParameterT, typename InfoT>
-typename PolymorphicConstructionImpl<AbstractProductT, ParameterT, InfoT>::RegisteredPlugins
-PolymorphicConstructionImpl<AbstractProductT, ParameterT, InfoT>::registered_plugins_;
+typename PolymorphicConstructionImpl<AbstractProductT,
+                                     ParameterT,
+                                     InfoT>::RegisteredPluginsInitializer // type
+PolymorphicConstructionImpl<AbstractProductT,
+                            ParameterT,
+                            InfoT>::registered_plugins_(                  // variable
+PolymorphicConstructionImpl<AbstractProductT,
+                            ParameterT,
+                            InfoT>::RegisteredPluginsInitializer::MakeCallback(
+                              &AbstractProductT::RegisterPlugins));       // c'tor call
 
 
 /**
