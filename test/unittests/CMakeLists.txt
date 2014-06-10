@@ -41,6 +41,7 @@ set (CVMFS_UNITTEST_SOURCES
   t_pathspec.cc
   t_dirtab.cc
   t_callbacks.cc
+  t_lazy_initializer.cc
 
   # test utility functions
   testutil.cc testutil.h
