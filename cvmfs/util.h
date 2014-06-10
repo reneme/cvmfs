@@ -542,6 +542,20 @@ class Callbackable {
 //
 
 
+/**
+ * This template can be used as a wrapper to implement lazy initialization using
+ * a pre-defined callback. On first access the callback will be invoked with a
+ * pointer to the data structure to be initialized. The lazy initialization is
+ * implemented in a thread safe manor, thus the callback is guaranteed to run
+ * only once!
+ *
+ * Note: by passing 'void' as the second template parameter, it is possible to
+ *       use a callback without any parameters. For example to implement the
+ *       initialization of global state.
+ *
+ * @param T   The type to be lazily initialized
+ * @param T1  (optional) setting to 'void' results in a callback without params
+ */
 template <class T, class T1 = T*>
 class LazyInitializer : public Callbackable<T1> {
  protected:
