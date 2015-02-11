@@ -1,3 +1,2 @@
 Hello! This is a dummy file with dummy content!
-Second try!!!!
-Third try!!!
+Start!
