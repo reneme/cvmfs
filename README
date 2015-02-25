@@ -17,3 +17,5 @@ the job.
 CVMFS was created chiefly for the delivery of experiment software stacks for
 the LHC experiments at CERN; development continues to address the software
 distribution needs of experiments worldwide.
+
+MODIFICATION OF README IN MoliHoly/cvmfs
