@@ -7,6 +7,10 @@ client has read access to all available files. On its first access request, a
 file is downloaded and cached locally. All downloaded pieces are verified with
 SHA-1.
 
+
+TROLOLO
+
+
 To do so, a directory structure is transformed into a CVMFS "repository", a
 form of content-addressable storage.
 
