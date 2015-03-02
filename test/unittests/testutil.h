@@ -1,8 +1,10 @@
 #ifndef CVMFS_UNITTEST_TESTUTIL
 #define CVMFS_UNITTEST_TESTUTIL
 
-#include <sys/types.h>
 #include <ctime>
+#include <sys/types.h>
+
+#include <gtest/gtest.h>
 
 #include "../../cvmfs/upload_facility.h"
 #include "../../cvmfs/hash.h"
@@ -12,6 +14,7 @@
 #include "../../cvmfs/object_fetcher.h"
 
 pid_t GetParentPid(const pid_t pid);
+std::string GetExecutablePath(const std::string &exe_name);
 
 time_t t(const int day, const int month, const int year);
 shash::Any h(const std::string &hash,
