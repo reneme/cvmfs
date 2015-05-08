@@ -1606,3 +1606,18 @@ WritableCatalog* CommandMigrate::MigrationWorker_217::GetWritable(
   return dynamic_cast<WritableCatalog*>(const_cast<Catalog*>(catalog));
 }
 
+
+//------------------------------------------------------------------------------
+
+
+CommandMigrate::ChownMigrationWorker::ChownMigrationWorker(
+                                                const worker_context *context)
+  : AbstractMigrationWorker<ChownMigrationWorker>(context)
+{
+
+}
+
+bool CommandMigrate::ChownMigrationWorker::RunMigration(
+                                                   PendingCatalog *data) const {
+  return true;
+}
