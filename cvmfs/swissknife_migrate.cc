@@ -682,6 +682,15 @@ bool CommandMigrate::AbstractMigrationWorker<DerivedT>::CleanupNestedCatalogs(
 }
 
 
+template<class DerivedT>
+catalog::WritableCatalog*
+CommandMigrate::AbstractMigrationWorker<DerivedT>::GetWritable(
+                                        const catalog::Catalog *catalog) const {
+  return dynamic_cast<catalog::WritableCatalog*>(const_cast<catalog::Catalog*>(
+    catalog));
+}
+
+
 CommandMigrate::MigrationWorker_20x::MigrationWorker_20x(
                                                 const worker_context *context) :
   AbstractMigrationWorker<MigrationWorker_20x> (context),
@@ -1653,12 +1662,6 @@ bool CommandMigrate::MigrationWorker_217::CommitDatabaseTransaction
   assert(!data->HasNew());
   GetWritable(data->old_catalog)->Commit();
   return true;
-}
-
-
-WritableCatalog* CommandMigrate::MigrationWorker_217::GetWritable(
-                                                 const Catalog *catalog) const {
-  return dynamic_cast<WritableCatalog*>(const_cast<Catalog*>(catalog));
 }
 
 
