@@ -32,9 +32,10 @@ CommandMigrate::CommandMigrate() :
 
 ParameterList CommandMigrate::GetParams() {
   ParameterList r;
-  r.push_back(Parameter::Mandatory('v', "migration base version ( 2.0.x | 2.1.7 )"));
-  r.push_back(Parameter::Mandatory('r', "repository URL (absolute local path "
-                                        "or remote URL)"));
+  r.push_back(Parameter::Mandatory('v',
+    "migration base version ( 2.0.x | 2.1.7 | chown )"));
+  r.push_back(Parameter::Mandatory('r',
+    "repository URL (absolute local path or remote URL)"));
   r.push_back(Parameter::Mandatory('u', "upstream definition string"));
   r.push_back(Parameter::Mandatory('o', "manifest output file"));
   r.push_back(Parameter::Mandatory('t', "temporary directory for catalog decompress"));
@@ -186,6 +187,17 @@ int CommandMigrate::Main(const ArgumentList &args) {
                                                 collect_catalog_statistics);
     migration_succeeded =
       DoMigrationAndCommit<MigrationWorker_217>(context, manifest_path);
+  } else if (migration_base == "chown") {
+    if (!ReadUidAndGid(uid, gid)) {
+      return 1;
+    }
+
+    ChownMigrationWorker::worker_context context(temporary_directory_,
+                                                 collect_catalog_statistics,
+                                                 uid_,
+                                                 gid_);
+    migration_succeeded =
+      DoMigrationAndCommit<ChownMigrationWorker>(context, manifest_path);
   } else {
     const std::string err_msg = "Unknown migration base: " + migration_base;
     Error(err_msg);
