@@ -12,6 +12,8 @@
 #include <string>
 
 #include "hash.h"
+#include "uid_map.h"
+#include "upload.h"
 #include "util.h"
 #include "util_concurrency.h"
 #include "catalog_traversal.h"
@@ -81,6 +83,9 @@ class CommandMigrate : public Command {
 
     Future<shash::Any>                new_catalog_hash;
     Future<size_t>                    new_catalog_size;
+
+    std::vector<uid_t>                assigned_uids;
+    std::vector<gid_t>                assigned_gids;
   };
 
   class PendingCatalogMap : public std::map<std::string, const PendingCatalog*>,
@@ -199,14 +204,14 @@ class CommandMigrate : public Command {
     {
       worker_context(const std::string  &temporary_directory,
                      const bool          collect_catalog_statistics,
-                     const uid_t         uid,
-                     const gid_t         gid)
+                     const UidMap       &uid_map,
+                     const GidMap       &gid_map)
         : AbstractMigrationWorker<ChownMigrationWorker>::worker_context(
             temporary_directory, collect_catalog_statistics)
-        , uid(uid)
-        , gid(gid) { }
-      const uid_t uid;
-      const gid_t gid;
+        , uid_map(uid_map)
+        , gid_map(gid_map) { }
+      const UidMap &uid_map;
+      const GidMap &gid_map;
     };
 
    public:
@@ -214,6 +219,10 @@ class CommandMigrate : public Command {
 
    protected:
     bool RunMigration(PendingCatalog *data) const;
+
+   private:
+    const UidMap &uid_map_;
+    const GidMap &gid_map_;
   };
 
  public:
@@ -260,6 +269,10 @@ class CommandMigrate : public Command {
   bool ConfigureSQLite() const;
   void AnalyzeCatalogStatistics() const;
   bool ReadPersona(const std::string &uid, const std::string &gid);
+  bool ReadPersonaMaps(const std::string &uid_map_path,
+                       const std::string &gid_map_path,
+                             UidMap      &uid_map,
+                             GidMap      &gid_map) const;
 
   bool GenerateNestedCatalogMarkerChunk();
   void CreateNestedCatalogMarkerDirent(const shash::Any &content_hash);
